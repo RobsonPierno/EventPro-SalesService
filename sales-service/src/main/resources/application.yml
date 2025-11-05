@@ -1,0 +1,39 @@
+server:
+  port: 8083
+  error:
+    include-message: always
+    include-binding-errors: always
+  
+spring:
+  application:
+    name: SalesService
+
+  datasource:
+    url: jdbc:postgresql://host.docker.internal:5432/postgres
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties:
+      hibernate:
+        default_schema: eventpro
+    hibernate:
+      ddl-auto: update
+      format_sql: true
+      show_sql: false
+      properties:
+        hibernate:
+          highlight_sql: true
+          format_sql: true
+          jdbc:
+            lob:
+              non_contextual_creation: true
+          type:
+            trace: true
+
+logging:
+  level:
+    root: DEBUG
+    org.hibernate.SQL: DEBUG
