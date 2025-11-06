@@ -12,11 +12,11 @@ import com.eventpro.SalesService.model.Sale;
 })
 public interface SaleMapper {
 
-	@Mapping(target = "id", expression = "java(dto.eventId() != null && dto.attendeeId() != null ? new SaleId(dto.eventId(), dto.attendeeId()) : null)")
+	@Mapping(target = "id", expression = "java(dto.ticketId() != null && dto.attendeeId() != null ? new SaleId(dto.ticketId(), dto.attendeeId()) : null)")
 	@Mapping(target = "status", expression = "java(dto.status() != null ? SaleStatusEnum.valueOf(dto.status().toUpperCase()) : null)")
 	public Sale toEntity(SaleDTO dto);
 	
-	@Mapping(target = "eventId", expression = "java(entity.getId() != null && entity.getId().getEventId() != null ? entity.getId().getEventId() : null)")
+	@Mapping(target = "ticketId", expression = "java(entity.getId() != null && entity.getId().getTicketId() != null ? entity.getId().getTicketId() : null)")
 	@Mapping(target = "attendeeId", expression = "java(entity.getId() != null && entity.getId().getAttendeeId() != null ? entity.getId().getAttendeeId() : null)")
 	@Mapping(target = "status", expression = "java(entity.getStatus() != null ? entity.getStatus().name() : null)")
 	public SaleDTO toDTO(Sale entity);

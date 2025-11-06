@@ -32,8 +32,16 @@ spring:
               non_contextual_creation: true
           type:
             trace: true
+  kafka:
+    bootstrap-servers: kafka:9092
 
 logging:
   level:
     root: DEBUG
     org.hibernate.SQL: DEBUG
+
+kafka:
+  topic:
+    ticket:
+      sale:
+        created: ticket.sale.created

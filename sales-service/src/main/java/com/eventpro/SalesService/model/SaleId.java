@@ -7,21 +7,21 @@ public class SaleId {
 	
 	public SaleId() {}
 	
-	public SaleId(final Integer eventId, final Integer attendeeId) {
-		this.eventId = eventId;
+	public SaleId(final Integer ticketId, final Integer attendeeId) {
+		this.ticketId = ticketId;
 		this.attendeeId = attendeeId;
 	}
 
-	private Integer eventId;
+	private Integer ticketId;
 	
 	private Integer attendeeId;
 
-	public Integer getEventId() {
-		return eventId;
+	public Integer getTicketId() {
+		return ticketId;
 	}
 
-	public void setEventId(Integer eventId) {
-		this.eventId = eventId;
+	public void setTicketId(Integer ticketId) {
+		this.ticketId = ticketId;
 	}
 
 	public Integer getAttendeeId() {

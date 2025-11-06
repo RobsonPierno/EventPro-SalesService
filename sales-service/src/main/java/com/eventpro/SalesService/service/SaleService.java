@@ -9,7 +9,9 @@ public interface SaleService {
 	
 	public void create(final SaleDTO sale);
 	
-	public List<SaleDTO> findAll(final Integer eventId, final Integer attendeeId, final String status);
+	public List<SaleDTO> findAll(final Integer ticketId, final Integer attendeeId, final String status);
 	
-	public SaleDTO updateStatus(final Integer eventId, final Integer attendeeId, final SaleStatusEnum status);
+	public SaleDTO updateStatus(final Integer ticketId, final Integer attendeeId, final SaleStatusEnum status);
+	
+	public SaleDTO getDetails(final Integer ticketId, final Integer attendeeId);
 }

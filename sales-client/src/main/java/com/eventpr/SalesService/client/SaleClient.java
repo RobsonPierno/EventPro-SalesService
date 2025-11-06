@@ -20,8 +20,11 @@ public interface SaleClient {
 	public void create(@RequestBody final SaleDTO sale);
 	
 	@GetMapping
-	public List<SaleDTO> findAll(@RequestParam(required = false) final Integer eventId, 
+	public List<SaleDTO> findAll(@RequestParam(required = false) final Integer ticketId, 
 								@RequestParam(required = false) final Integer attendeeId, 
 								@RequestParam(required = false) final String status);
+	
+	@GetMapping("/detail")
+	public SaleDTO getDetails(@RequestParam(required = true) final Integer ticketId, @RequestParam(required = true) final Integer attendeeId);
 	
 }

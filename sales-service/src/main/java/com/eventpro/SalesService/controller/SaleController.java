@@ -23,9 +23,15 @@ public class SaleController implements SaleClient {
 	}
 
 	@Override
-	public List<SaleDTO> findAll(final Integer eventId, final Integer attendeeId, final String status) {
-		List<SaleDTO> dtos = this.service.findAll(eventId, attendeeId, status);
+	public List<SaleDTO> findAll(final Integer ticketId, final Integer attendeeId, final String status) {
+		List<SaleDTO> dtos = this.service.findAll(ticketId, attendeeId, status);
 		return dtos;
+	}
+
+	@Override
+	public SaleDTO getDetails(final Integer ticketId, final Integer attendeeId) {
+		SaleDTO saleDTO = this.service.getDetails(ticketId, attendeeId);
+		return saleDTO;
 	}
 
 }

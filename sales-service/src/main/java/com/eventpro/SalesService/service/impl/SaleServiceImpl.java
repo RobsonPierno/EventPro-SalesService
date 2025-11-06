@@ -1,5 +1,6 @@
 package com.eventpro.SalesService.service.impl;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -11,9 +12,16 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.eventpr.SalesService.dto.SaleDTO;
+import com.eventpro.AttendeeService.client.AttendeeClient;
+import com.eventpro.AttendeeService.dto.AttendeeDTO;
+import com.eventpro.EventService.client.EventClient;
+import com.eventpro.EventService.client.TicketClient;
+import com.eventpro.EventService.dto.EventDTO;
+import com.eventpro.EventService.dto.TicketDTO;
 import com.eventpro.SalesService.enums.SaleStatusEnum;
 import com.eventpro.SalesService.model.Sale;
 import com.eventpro.SalesService.model.SaleId;
+import com.eventpro.SalesService.producer.KafkaProducer;
 import com.eventpro.SalesService.repository.SaleRepository;
 import com.eventpro.SalesService.repository.SaleSpecifications;
 import com.eventpro.SalesService.service.SaleService;
@@ -25,30 +33,43 @@ public class SaleServiceImpl implements SaleService {
 	private static final Logger log = LogManager.getLogger(SaleServiceImpl.class);
 	
 	private final SaleRepository repository;
-	
+	private final TicketClient ticketClient;
+	private final EventClient eventClient;
+	private final AttendeeClient attendeeClient;
 	private final SaleMapper mapper;
+	private final KafkaProducer kafkaProducer;
 
 	@Autowired
-	public SaleServiceImpl(SaleRepository repository, SaleMapper mapper) {
+	public SaleServiceImpl(SaleRepository repository, TicketClient ticketClient, EventClient eventClient, AttendeeClient attendeeClient, SaleMapper mapper, KafkaProducer kafkaProducer) {
 		this.repository = repository;
+		this.ticketClient = ticketClient;
+		this.eventClient = eventClient;
+		this.attendeeClient = attendeeClient;
 		this.mapper = mapper;
+		this.kafkaProducer = kafkaProducer;
 	}
 	
 	@Override
 	public void create(final SaleDTO sale) {
 		log.debug("create({})", sale);
 		
+		this.ticketClient.findById(sale.ticketId());
+		
+		this.attendeeClient.findById(sale.attendeeId());
+		
 		Sale entity = this.mapper.toEntity(sale);
 		entity.setStatus(SaleStatusEnum.PENDING_PAYMENT);
 		
 		this.repository.save(entity);
+		
+		this.kafkaProducer.ticketSaleCreated(sale);
 	}
 
 	@Override
-	public List<SaleDTO> findAll(final Integer eventId, final Integer attendeeId, final String status) {
-		log.debug("findAll({}, {}, {})", eventId, attendeeId, status);
+	public List<SaleDTO> findAll(final Integer ticketId, final Integer attendeeId, final String status) {
+		log.debug("findAll({}, {}, {})", ticketId, attendeeId, status);
 		
-		var spec = Specification.where(SaleSpecifications.hasEventId(eventId))
+		var spec = Specification.where(SaleSpecifications.hasTicketId(ticketId))
 					.and(SaleSpecifications.hasAttendeeId(attendeeId))
 					.and(SaleSpecifications.hasStatus(status));
 		
@@ -69,6 +90,35 @@ public class SaleServiceImpl implements SaleService {
 		SaleDTO dto = this.mapper.toDTO(entity);
 		
 		return dto;
+	}
+
+	@Override
+	public SaleDTO getDetails(final Integer ticketId, final Integer attendeeId) {
+		log.debug("getDetails({}, {})", ticketId, attendeeId);
+		
+		SaleId saleId = new SaleId(ticketId, attendeeId);
+		Sale sale = this.repository.findById(saleId).orElseThrow(RuntimeException::new);
+
+		TicketDTO ticketDto = this.ticketClient.findById(sale.getId().getTicketId());
+		String ticketType = ticketDto.type(); 
+		BigDecimal price = ticketDto.price();
+
+		EventDTO eventDto = this.eventClient.findById(ticketDto.eventId());
+		String eventName = eventDto.name();
+		
+		AttendeeDTO attDto = this.attendeeClient.findById(sale.getId().getAttendeeId());
+		String attendeeName = attDto.name(); 
+		
+		SaleDTO saleDTO = new SaleDTO(	sale.getId().getTicketId(), 
+										eventName, 
+										ticketType, 
+										sale.getId().getAttendeeId(), 
+										attendeeName, 
+										price, 
+										sale.getPurchaseDate(), 
+										sale.getStatus().name());
+		
+		return saleDTO;
 	}
 
 }

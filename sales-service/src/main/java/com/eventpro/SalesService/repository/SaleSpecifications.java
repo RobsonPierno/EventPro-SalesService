@@ -7,10 +7,10 @@ import com.eventpro.SalesService.model.Sale;
 
 public class SaleSpecifications {
 
-	public static final Specification<Sale> hasEventId(final Integer eventId) {
+	public static final Specification<Sale> hasTicketId(final Integer ticketId) {
 		return (root, query, cb) -> {
-			if (eventId == null) return null;
-			return cb.equal(root.get("id").get("eventId"), eventId);
+			if (ticketId == null) return null;
+			return cb.equal(root.get("id").get("ticketId"), ticketId);
 		};
 	}
 	
