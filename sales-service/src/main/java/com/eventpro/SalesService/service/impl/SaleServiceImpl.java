@@ -1,6 +1,8 @@
 package com.eventpro.SalesService.service.impl;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.LocalTime;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -8,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,12 +53,28 @@ public class SaleServiceImpl implements SaleService {
 	}
 	
 	@Override
+	@Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
 	public void create(final SaleDTO sale) {
 		log.debug("create({})", sale);
+		LocalTime start = LocalTime.now();
 		
-		this.ticketClient.findById(sale.ticketId());
+		TicketDTO ticket = this.ticketClient.findById(sale.ticketId());
+		log.debug("Ticket Exists! | ticketId: {}", sale.ticketId());
 		
 		this.attendeeClient.findById(sale.attendeeId());
+		log.debug("Attendee Exists! | attendeeId: {}", sale.attendeeId());
+		
+		EventDTO event = this.eventClient.findById(ticket.eventId());
+		Integer maxPeople = event.maxPeople();
+		log.debug("The maximum number of people at the event is {}!", maxPeople);
+		
+		Integer qtdAlreadySolde = this.repository.countByTicketId(sale.ticketId());
+		log.debug("{} tickets were solde until now!", qtdAlreadySolde);
+		
+		if (qtdAlreadySolde + 1 >= maxPeople) {
+			String message = String.format("The maximum number of people at the event is %s, and {} tickets were solde until now, so no tickets available anymore", maxPeople, qtdAlreadySolde);
+			throw new RuntimeException(message);
+		}
 		
 		Sale entity = this.mapper.toEntity(sale);
 		entity.setStatus(SaleStatusEnum.PENDING_PAYMENT);
@@ -63,6 +82,10 @@ public class SaleServiceImpl implements SaleService {
 		this.repository.save(entity);
 		
 		this.kafkaProducer.ticketSaleCreated(sale);
+		
+		LocalTime end = LocalTime.now();
+		
+		log.debug("Create Sale duration: {}", Duration.between(start, end).getSeconds());
 	}
 
 	@Override
