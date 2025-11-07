@@ -71,8 +71,8 @@ public class SaleServiceImpl implements SaleService {
 		Integer qtdAlreadySolde = this.repository.countByTicketId(sale.ticketId());
 		log.debug("{} tickets were solde until now!", qtdAlreadySolde);
 		
-		if (qtdAlreadySolde + 1 >= maxPeople) {
-			String message = String.format("The maximum number of people at the event is %s, and {} tickets were solde until now, so no tickets available anymore", maxPeople, qtdAlreadySolde);
+		if (qtdAlreadySolde + 1 > maxPeople) {
+			String message = String.format("The maximum number of people at the event is %s, and %s tickets were solde until now, so no tickets available anymore", maxPeople, qtdAlreadySolde);
 			throw new RuntimeException(message);
 		}
 		

@@ -16,7 +16,7 @@ import jakarta.persistence.LockModeType;
 public interface SaleRepository extends JpaRepository<Sale, SaleId>, JpaSpecificationExecutor<Sale> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT COUNT(s) FROM Sale s WHERE s.ticketId = :ticketId")
+    @Query("SELECT COUNT(s) FROM Sale s WHERE s.id.ticketId = :ticketId")
 	Integer countByTicketId(@Param("ticketId")Integer ticketId);
 
 }
