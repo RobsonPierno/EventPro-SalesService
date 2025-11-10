@@ -34,14 +34,15 @@ spring:
             trace: true
   kafka:
     bootstrap-servers: kafka:9092
-
-logging:
-  level:
-    root: DEBUG
-    org.hibernate.SQL: DEBUG
+    consumer:
+      group-id: sales-group
 
 kafka:
   topic:
     ticket:
       sale:
         created: ticket.sale.created
+        done: ticket.sale.done
+    payment:
+      success: payment.success
+      fail: payment.fail

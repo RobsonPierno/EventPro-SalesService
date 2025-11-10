@@ -55,21 +55,22 @@ public class SaleServiceImpl implements SaleService {
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE)
 	public void create(final SaleDTO sale) {
-		log.debug("create({})", sale);
+		log.info("create({})", sale);
 		LocalTime start = LocalTime.now();
 		
 		TicketDTO ticket = this.ticketClient.findById(sale.ticketId());
-		log.debug("Ticket Exists! | ticketId: {}", sale.ticketId());
+		log.info("Ticket Exists! | ticketId: {}", sale.ticketId());
 		
 		this.attendeeClient.findById(sale.attendeeId());
-		log.debug("Attendee Exists! | attendeeId: {}", sale.attendeeId());
+		log.info("Attendee Exists! | attendeeId: {}", sale.attendeeId());
 		
 		EventDTO event = this.eventClient.findById(ticket.eventId());
 		Integer maxPeople = event.maxPeople();
-		log.debug("The maximum number of people at the event is {}!", maxPeople);
+		log.info("The maximum number of people at the event is {}!", maxPeople);
 		
-		Integer qtdAlreadySolde = this.repository.countByTicketId(sale.ticketId());
-		log.debug("{} tickets were solde until now!", qtdAlreadySolde);
+		List<SaleStatusEnum> statuses = List.of( SaleStatusEnum.PAID, SaleStatusEnum.COMPLETED, SaleStatusEnum.PENDING_PAYMENT );
+		Integer qtdAlreadySolde = this.repository.countByTicketIdAndStatusIn(sale.ticketId(), statuses);
+		log.info("{} tickets were solde until now!", qtdAlreadySolde);
 		
 		if (qtdAlreadySolde + 1 > maxPeople) {
 			String message = String.format("The maximum number of people at the event is %s, and %s tickets were solde until now, so no tickets available anymore", maxPeople, qtdAlreadySolde);
@@ -85,12 +86,12 @@ public class SaleServiceImpl implements SaleService {
 		
 		LocalTime end = LocalTime.now();
 		
-		log.debug("Create Sale duration: {}", Duration.between(start, end).getSeconds());
+		log.info("Create Sale duration: {}", Duration.between(start, end).getSeconds());
 	}
 
 	@Override
 	public List<SaleDTO> findAll(final Integer ticketId, final Integer attendeeId, final String status) {
-		log.debug("findAll({}, {}, {})", ticketId, attendeeId, status);
+		log.info("findAll({}, {}, {})", ticketId, attendeeId, status);
 		
 		var spec = Specification.where(SaleSpecifications.hasTicketId(ticketId))
 					.and(SaleSpecifications.hasAttendeeId(attendeeId))
@@ -103,10 +104,10 @@ public class SaleServiceImpl implements SaleService {
 
 	@Override
 	@Transactional(propagation = Propagation.REQUIRED)
-	public SaleDTO updateStatus(Integer eventId, Integer attendeeId, SaleStatusEnum status) {
-		log.debug("findAll({}, {}, {})", eventId, attendeeId, status);
+	public SaleDTO updateStatus(Integer ticketId, Integer attendeeId, SaleStatusEnum status) {
+		log.info("updateStatus({}, {}, {})", ticketId, attendeeId, status);
 		
-		SaleId id = new SaleId(eventId, attendeeId);
+		SaleId id = new SaleId(ticketId, attendeeId);
 		Sale entity = this.repository.findById(id).orElseThrow(RuntimeException::new);
 		
 		entity.setStatus(status);
@@ -117,7 +118,7 @@ public class SaleServiceImpl implements SaleService {
 
 	@Override
 	public SaleDTO getDetails(final Integer ticketId, final Integer attendeeId) {
-		log.debug("getDetails({}, {})", ticketId, attendeeId);
+		log.info("getDetails({}, {})", ticketId, attendeeId);
 		
 		SaleId saleId = new SaleId(ticketId, attendeeId);
 		Sale sale = this.repository.findById(saleId).orElseThrow(RuntimeException::new);

@@ -14,4 +14,5 @@ public interface SaleService {
 	public SaleDTO updateStatus(final Integer ticketId, final Integer attendeeId, final SaleStatusEnum status);
 	
 	public SaleDTO getDetails(final Integer ticketId, final Integer attendeeId);
+	
 }

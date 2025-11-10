@@ -15,7 +15,7 @@ public class KafkaProducer {
     
     @Value("${kafka.topic.ticket.sale.created}")
     private String ticketSaleCreatedTopic;
-
+    
     public void ticketSaleCreated(final SaleDTO saleDto) {
     	String key = String.format("AttendeeId:%s|TicketId:%s}", saleDto.attendeeId(), saleDto.ticketId());
         this.kafkaTemplate.send(this.ticketSaleCreatedTopic, key, saleDto);
