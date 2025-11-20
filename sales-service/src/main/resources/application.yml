@@ -37,6 +37,26 @@ spring:
     consumer:
       group-id: sales-group
 
+  security:
+    oauth2:
+      client:
+        registration:
+          sales-client:
+            authorization-grant-type: client_credentials
+            client-id: sales-client
+            client-secret: KMXnuhk0wvZhhagau4lESnMzC4S2EgNn
+            scope: openid
+            provider: sales-provider
+            token-uri: http://keycloak:8080/realms/master/protocol/openid-connect/token
+        provider:
+          sales-provider:
+            authorization-uri: http://keycloak:8080/realms/master/protocol/openid-connect/auth
+            token-uri: http://keycloak:8080/realms/master/protocol/openid-connect/token
+            user-info-uri: https://keycloak:8080/auth/realms/master/protocol/openid-connect/userinfo
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://keycloak:8080/realms/master/protocol/openid-connect/certs
+
 kafka:
   topic:
     ticket:
