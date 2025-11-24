@@ -1,0 +1,49 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo "Downloading private JARs from S3..."
+      - mkdir -p libs
+      - mkdir -p ~/.m2/repository/com/eventpro/OrganizerService/0.0.1-SNAPSHOT/
+      - mkdir -p ~/.m2/repository/com/eventpro/AttendeeService/0.0.1-SNAPSHOT/
+      
+      - aws s3 cp s3://$S3_BUCKET/maven/sales-client-0.0.1-SNAPSHOT.jar ./libs/
+      - aws s3 cp s3://$S3_BUCKET/maven/event-client-0.0.1-SNAPSHOT.jar ./libs/
+      - aws s3 cp s3://$S3_BUCKET/maven/attendee-client-0.0.1-SNAPSHOT.jar ./libs/
+      - aws s3 cp s3://$S3_BUCKET/maven/AttendeeService-0.0.1-SNAPSHOT.pom ~/.m2/repository/com/eventpro/AttendeeService/0.0.1-SNAPSHOT/AttendeeService-0.0.1-SNAPSHOT.pom
+      - aws s3 cp s3://$S3_BUCKET/maven/EventService-0.0.1-SNAPSHOT.pom ~/.m2/repository/com/eventpro/EventService/0.0.1-SNAPSHOT/EventService-0.0.1-SNAPSHOT.pom
+
+      - echo "Installing private JARs in local Maven repository..."
+      - mvn install:install-file -Dfile=libs/event-client-0.0.1-SNAPSHOT.jar -DgroupId=com.eventpro -DartifactId=event-client -Dversion=0.0.1-SNAPSHOT -Dpackaging=jar
+      - mvn install:install-file -Dfile=libs/sales-client-0.0.1-SNAPSHOT.jar -DgroupId=com.eventpro -DartifactId=sales-client -Dversion=0.0.1-SNAPSHOT -Dpackaging=jar
+      - mvn install:install-file -Dfile=libs/attendee-client-0.0.1-SNAPSHOT.jar -DgroupId=com.eventpro -DartifactId=attendee-client -Dversion=0.0.1-SNAPSHOT -Dpackaging=jar
+      
+      - echo Logging into Amazon ECR...
+      - aws --version
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/eventpro/sales-service
+      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the JAR...
+      - mvn clean package -DskipTests
+      - echo Building the Docker image...
+      - docker build -t $REPOSITORY_URI:latest .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker image...
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - aws s3 cp sales-client/target/sales-client-0.0.1-SNAPSHOT.jar s3://$S3_BUCKET/maven
+      - echo Writing image definitions file...
+      - printf '{"ImageURI":"%s"}' $REPOSITORY_URI:$IMAGE_TAG > imageDetail.json
+
+artifacts:
+  files:
+    - imageDetail.json
